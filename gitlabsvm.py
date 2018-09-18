@@ -23,6 +23,11 @@ Options:
   --value=<value>               The JSON-encoded value of the variable
   --file                        Write to file  [default:projectslug.json]
 
+Examples:
+  ./gitlabsvm.py set myorg/mysubgroup/myproject --key=Key1 --value=123 --protected --environment="Testenv"
+  ./gitlabsvm.py del myorg/mysubgroup/myproject --key=Key1 --key=Key2 --protected --environment="Testenv"
+  ./gitlabsvm.py exportgroup myorg --file
+
 First use:
   To access the Gitlab-API you need to create a Personal Access Token (PAT) on
   https://gitlab.com/profile/personal_access_tokens
@@ -61,16 +66,18 @@ if __name__ == '__main__':
     gl = gitlab.Gitlab.from_config(
         'gitlab', [expanduser("~") + '/.python-gitlab.cfg'])
 
-    projects = [{'id': arguments['<project>']}]
+    projects = []
     if arguments['exportgroup']:
         g = gl.groups.get(arguments['<group>'])
         g_variables = g.variables.list()
         logging.debug("Group Variables: %s", g_variables)
         # gl.projects.list(visibility='private', as_list=False)
         projects = g.projects.list(all=True)
+    else:
+        projects.append(gl.projects.get(arguments['<project>']))
 
     for pg in projects:
-        p = gl.projects.get(pg['id'])
+        p = gl.projects.get(pg.id)
 
         project_info = {'projectId': p.id, 'namespace': p.path_with_namespace}
 
