@@ -38,9 +38,9 @@ To access the Gitlab-API you need to create a Personal Access Token (PAT) on htt
 # Usage
 
 ```
-  gitlabsvm.py get <project> [--key=<key> --key=<key>] [--environment=<env>] [--protected]
-  gitlabsvm.py set <project> --key=<key> --value=<value> [--environment=<env>] [--protected]
-  gitlabsvm.py del <project> [--key=<key> --key=<key>] [--environment=<env>] [--protected]
+  gitlabsvm.py get <project> [--key=<key> --key=<key>] [--environment=<env>] [--protected=<true|false>]
+  gitlabsvm.py set <project> --key=<key> --value=<value> [--environment=<env>] [--protected=<true|false>]
+  gitlabsvm.py del <project> [--key=<key> --key=<key>] [--environment=<env>] [--protected=<true|false>]
   gitlabsvm.py export <project> [--csv] [--file]
   gitlabsvm.py exportgroup <group> [--csv] [--file]
   gitlabsvm.py import <project> --filename=<filename.json>
@@ -50,22 +50,22 @@ To access the Gitlab-API you need to create a Personal Access Token (PAT) on htt
 Options:
   -h --help                     Show this screen.
   --version                     Show version.
-  <project>                     Project name including groups, e.g. bdstudio/eshop.
-  <group>                       Groupname, e.g. bdstudio
+  <project>                     Project name including groups, e.g. groupname/project.
+  <group>                       Groupname, e.g. groupname
   --key=<key>                   The Key-Name of the secret variable (this is not unique)
-  --environment=<env>           The target environment [default:'*']
-  --protected                   Only valid for protected branches [default:false]
+  --environment=<env>           The target environment
+  --protected=<true|false>      Only valid for protected branches
   --value=<value>               The JSON-encoded value of the variable
-  --file                        Write to file  [default:projectslug.json]
+  --file                        Write to file
 
   ```
 
 # Examples
 
 ```bash
-  ./gitlabsvm.py set myorg/mysubgroup/myproject --key=Key1 --value=123 --protected --environment="Testenv"
+  ./gitlabsvm.py set myorg/mysubgroup/myproject --key=Key1 --value=123 --protected=1 --environment="Testenv"
 
-  ./gitlabsvm.py del myorg/mysubgroup/myproject --key=Key1 --key=Key2 --protected --environment="Testenv"
+  ./gitlabsvm.py del myorg/mysubgroup/myproject --key=Key1 --key=Key2 --protected=1 --environment="Testenv"
 
   ./gitlabsvm.py exportgroup myorg --file
 ```

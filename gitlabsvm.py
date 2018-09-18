@@ -3,9 +3,9 @@
    Author: Benedict Juretko
    License: MIT
 Usage:
-  gitlabsvm.py get <project> [--key=<key> --key=<key>] [--environment=<env>] [--protected]
-  gitlabsvm.py set <project> --key=<key> --value=<value> [--environment=<env>] [--protected]
-  gitlabsvm.py del <project> [--key=<key> --key=<key>] [--environment=<env>] [--protected]
+  gitlabsvm.py get <project> [--key=<key> --key=<key>] [--environment=<env>] [--protected=<true|false>]
+  gitlabsvm.py set <project> --key=<key> --value=<value> [--environment=<env>] [--protected=<true|false>]
+  gitlabsvm.py del <project> [--key=<key> --key=<key>] [--environment=<env>] [--protected=<true|false>]
   gitlabsvm.py export <project> [--csv] [--file]
   gitlabsvm.py exportgroup <group> [--csv] [--file]
   gitlabsvm.py import <project> --filename=<filename.json>
@@ -15,17 +15,17 @@ Usage:
 Options:
   -h --help                     Show this screen.
   --version                     Show version.
-  <project>                     Project name including groups, e.g. bdstudio/eshop.
-  <group>                       Groupname, e.g. bdstudio
+  <project>                     Project name including groups, e.g. groupname/project.
+  <group>                       Groupname, e.g. groupname
   --key=<key>                   The Key-Name of the secret variable (this is not unique)
-  --environment=<env>           The target environment [default:'*']
-  --protected                   Only valid for protected branches [default:false]
+  --environment=<env>           The target environment
+  --protected=<true|false>      Only valid for protected branches
   --value=<value>               The JSON-encoded value of the variable
-  --file                        Write to file  [default:projectslug.json]
+  --file                        Write to file
 
 Examples:
-  ./gitlabsvm.py set myorg/mysubgroup/myproject --key=Key1 --value=123 --protected --environment="Testenv"
-  ./gitlabsvm.py del myorg/mysubgroup/myproject --key=Key1 --key=Key2 --protected --environment="Testenv"
+  ./gitlabsvm.py set myorg/mysubgroup/myproject --key=Key1 --value=123 --protected=1 --environment="Testenv"
+  ./gitlabsvm.py del myorg/mysubgroup/myproject --key=Key1 --key=Key2 --protected=1 --environment="Testenv"
   ./gitlabsvm.py exportgroup myorg --file
 
 First use:
@@ -120,7 +120,7 @@ if __name__ == '__main__':
                         continue
                     if not (arguments['--environment'] is None) and (pv.environment_scope != arguments['--environment']):
                         continue
-                    if not (arguments['--protected'] is None) and (pv.protected != arguments['--protected']):
+                    if not (arguments['--protected'] is None) and (pv.protected != (arguments['--protected'] in ['true', '1', 'True', 'y', 'yes'])):
                         continue
                     filtered_variables.append(pv)
                 logging.debug("Filtered SVs: %s", filtered_variables)
