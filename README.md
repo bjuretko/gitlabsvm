@@ -34,7 +34,7 @@ To access the Gitlab-API you need to create a Personal Access Token (PAT) on htt
 
   Put your PAT at the key '`private_token`'. 
   _Restrict the user and permissions to personal use only, as the PAT allows global access to your gitlab API with full usage rights._
-  You can use the file 
+
 # Usage
 
 ```
@@ -60,3 +60,12 @@ Options:
 
   ```
 
+# Examples
+
+```bash
+  ./gitlabsvm.py set myorg/mysubgroup/myproject --key=Key1 --value=123 --protected --environment="Testenv"
+
+  ./gitlabsvm.py del myorg/mysubgroup/myproject --key=Key1 --key=Key2 --protected --environment="Testenv"
+
+  ./gitlabsvm.py exportgroup myorg --file
+```
