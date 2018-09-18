@@ -122,22 +122,23 @@ if __name__ == '__main__':
                         continue
                     if not (arguments['--protected'] is None) and (pv.protected != arguments['--protected']):
                         continue
-                    filtered_variables.append(dict(pv._attrs))
+                    filtered_variables.append(pv)
+                logging.debug("Filtered SVs: %s", filtered_variables)
                 if arguments['get']:
-                    print json.dumps(filtered_variables)
+                    print json.dumps([dict(pv._attrs) for pv in filtered_variables])
                 elif arguments['del']:
-                    map(lambda k: p.variables.delete(k['key']), filtered_variables)
+                    map(lambda k: p.variables.delete(k.key), filtered_variables)
                     logging.info("Deleted %d variables: %s", len(filtered_variables), filtered_variables)
                 elif arguments['set']:
                     if len(filtered_variables) > 1:
                         logging.critical("There are more than one secret variables under this key: %s",
-                                      filtered_variables)
+                                         [dict(pv._attrs) for pv in filtered_variables])
                         sys.exit(1)
                     elif len(filtered_variables) == 1:
-                        pv = p.variables.get(filtered_variables[0]['key'])
+                        pv = filtered_variables[0]
                         pv.value = arguments['--value']
                         pv.save()
-                        logging.info("Updated variable %s", filtered_variables[0]['key'])
+                        logging.info("Updated variable %s", pv)
                     else:
                         p.variables.create(
                             {'key': arguments['--key'][0], 'value': arguments['--value'], 'protected': arguments['--protected'], 'environment_scope': arguments['--environment'] if arguments['--environment'] != None else '*'})
