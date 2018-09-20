@@ -1,22 +1,29 @@
 # gitlabsvm - Gitlab Secret Variables Management
 
-A convenient CLI around [python-gitlab](https://github.com/python-gitlab/python-gitlab) to deal with secret variables.
+A convenient CLI around [python-gitlab](https://github.com/python-gitlab/python-gitlab) to deal with [gitlab secret variables](https://docs.gitlab.com/ee/ci/variables/).
 
 # Disclaimer
 
 Warning: The script does not ask for any confirmation on write operations. Be careful !
+<b>
+Big Warning: There is a bug with Gitlab to modify / delete variables sharing the same keyname.
+See https://gitlab.com/gitlab-org/gitlab-ee/issues/7673 for more information.
+</b>
 
 # Install
 
 ```bash
 pip install -r requirements.txt
+# pipenv install
 ./gitlabsvm.py --help
 ```
 
-To access the Gitlab-API you need to create a Personal Access Token (PAT) on https://gitlab.com/profile/personal_access_tokens
+To access the Gitlab-API you need to create a Personal Access Token (PAT) on https://gitlab.com/profile/personal_access_tokens.
 
-  Then create or edit a [~/.python-gitlab.cfg](python-gitlab.cfg) config file in your home directory 
-  or a `.python-gitlab.cfg` in the cwd with the following contents
+You can use [gogpat](https://github.com/solidnerd/gogpat/) from @solidnerd as well (if not using 2FA).
+
+Then create or edit a [~/.python-gitlab.cfg](python-gitlab.cfg) config file in your home directory 
+or a `.python-gitlab.cfg` in the cwd with the following contents
 
   ```ini
      [global]
