@@ -3,12 +3,12 @@
    Author: Benedict Juretko
    License: MIT
 Usage:
-  gitlabsvm.py get <project> [--key=<key> --key=<key>] [--environment=<env>] [--protected=<true|false>]
-  gitlabsvm.py set <project> --key=<key> --value=<value> [--environment=<env>] [--protected=<true|false>]
-  gitlabsvm.py del <project> [--key=<key> --key=<key>] [--environment=<env>] [--protected=<true|false>]
-  gitlabsvm.py export <project> [--csv] [--file]
-  gitlabsvm.py exportgroup <group> [--csv] [--file]
-  gitlabsvm.py import <project> --filename=<filename.json>
+  gitlabsvm.py [--gitlab=<gitlabinstance>] get <project> [--key=<key> --key=<key>] [--environment=<env>] [--protected=<bool>]
+  gitlabsvm.py [--gitlab=<gitlabinstance>] set <project> --key=<key> --value=<value> [--environment=<env>] [--protected=<bool>]
+  gitlabsvm.py [--gitlab=<gitlabinstance>] del <project> [--key=<key> --key=<key>] [--environment=<env>] [--protected=<bool>]
+  gitlabsvm.py [--gitlab=<gitlabinstance>] export <project> [--csv] [--file]
+  gitlabsvm.py [--gitlab=<gitlabinstance>] exportgroup <group> [--csv] [--file]
+  gitlabsvm.py [--gitlab=<gitlabinstance>] import <project> --filename=<filename.json>
   gitlabsvm.py (-h | --help)
   gitlabsvm.py --version
 
@@ -17,11 +17,12 @@ Options:
   --version                     Show version.
   <project>                     Project name including groups, e.g. groupname/project.
   <group>                       Groupname, e.g. groupname
-  --key=<key>                   The Key-Name of the secret variable (this is not unique)
-  --environment=<env>           The target environment
-  --protected=<true|false>      Only valid for protected branches
-  --value=<value>               The JSON-encoded value of the variable
+  --key=NAME                    The Key-Name of the secret variable (this is not unique)
+  --environment=NAME            The target environment name, like staging or production
+  --protected=true              Only valid for protected branches
+  --value=ESCAPEDSTRING         The JSON-encoded value of the variable
   --file                        Write to file
+  [--gitlab]                    Gitlab instance to use [default:gitlab] from ~/.python-gitlab.cfg
 
 Examples:
   ./gitlabsvm.py set myorg/mysubgroup/myproject --key=Key1 --value=123 --protected=1 --environment="Testenv"
@@ -49,22 +50,33 @@ First use:
   Put your PAT at the key 'private_token'. Set the owner and permissions 
   to 600.
 """
-from docopt import docopt
-import gitlab  # http://python-gitlab.readthedocs.io/en/stable/install.html
-import csv
-import json
 import sys
+from docopt import docopt
+
+import os, inspect
+
+# uncomment the following lines to allow debugging of python-gitlab submodule
+# cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile( inspect.currentframe() ))[0],"python-gitlab")))
+# if cmd_subfolder not in sys.path:
+#    sys.path.insert(0, cmd_subfolder)
+
+#import gitlab  # http://python-gitlab.readthedocs.io/en/stable/install.html
+
+import gitlab
+import csv
+
+import json
+
 import logging
 from datetime import datetime
-from os.path import expanduser
 
 if __name__ == '__main__':
     logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+    logging.debug(gitlab.__version__)
     arguments = docopt(__doc__, version='0.0.1')
     logging.debug(arguments)
-
-    gl = gitlab.Gitlab.from_config(
-        'gitlab', [expanduser("~") + '/.python-gitlab.cfg'])
+    gitlabinstance = 'gitlab' if arguments['--gitlab'] else arguments['--gitlab']
+    gl = gitlab.Gitlab.from_config(gitlabinstance)
 
     projects = []
     if arguments['exportgroup']:
@@ -87,7 +99,7 @@ if __name__ == '__main__':
             try:
                 p_variables = p.variables.list(all=True)
                 filename_prefix = p.path_with_namespace.replace('/', '_')
-                filename_timestamp = datetime.now().strftime('%Y%m%d%H%M%S"')
+                filename_timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
                 filename_suffix = "csv" if arguments['--csv'] else "json"
                 outputfile = open("%s_%s.%s" % (filename_prefix, filename_timestamp,
                                                 filename_suffix), 'w') if arguments['--file'] else sys.stdout
