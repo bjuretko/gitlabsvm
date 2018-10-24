@@ -6,12 +6,16 @@ Usage:
   gitlabsvm.py [-v] [--gitlab=<string>] get <project> [--key=<string> --key=<string>] [--environment=<string>] [--protected=<bool>]
   gitlabsvm.py [-v] [--gitlab=<string>] set <project> --key=<string> --value=<string> [--environment=<string>] [--protected=<bool>]
   gitlabsvm.py [-v] [--gitlab=<string>] del <project> [--key=<string> --key=<string>] [--environment=<string>] [--protected=<bool>]
-  gitlabsvm.py [-v] [--gitlab=<string>] export <project> [--csv] [--file]
-  gitlabsvm.py [-v] [--gitlab=<string>] exportgroup <group> [--csv] [--file]
-  gitlabsvm.py [-v] [--gitlab=<string>] import <project> <filename.json>
+  gitlabsvm.py [-v] [--gitlab=<string>] exportgroup <group> [--all] [--csv] [--file]
+  gitlabsvm.py [-v] [--gitlab=<string>] import <project/group> <filename.json>
   gitlabsvm.py (-h | --help)
   gitlabsvm.py --version
 
+Arguments:
+  get <project>                 Get 1 or more project variables.
+  set <project>                 Change or create a project variable
+  del <project>                 Remove 1 or more project variables.
+  exportgroup <group>           Print group variables, use --all to include all subprojects as well
 
 Options:
   -h --help                     Show this screen.
@@ -24,12 +28,13 @@ Options:
   --protected=<bool>            Only valid for protected branches
   --value=<string>              The JSON-escaped value of the variable
   --file                        Write output to file with a timestamped filename
-  --gitlab=<string>             Gitlab instance from ~/.python-gitlab.cfg or URL
+  --all                         Include all sub projects in output
+  --gitlab=<string>             Gitlab instance from ~/.python-gitlab.cfg or URL. Defaults to gitlab and https://www.gitlab.com respectively
 
 Examples:
   ./gitlabsvm.py set myorg/mysubgroup/myproject --key=Key1 --value=123 --protected=1 --environment="Testenv"
   ./gitlabsvm.py del myorg/mysubgroup/myproject --key=Key1 --key=Key2 --protected=1 --environment="Testenv"
-  ./gitlabsvm.py exportgroup myorg --file
+  ./gitlabsvm.py get myorg/mysubgroup/myproject
 
 First use:
   To access the Gitlab-API you need to create a Personal Access Token (PAT) on
@@ -74,7 +79,7 @@ from os.path import exists, expanduser
 
 if __name__ == '__main__':
 
-    arguments = docopt(__doc__, version='0.0.1')
+    arguments = docopt(__doc__, version='0.0.2')
     logging.basicConfig(
         stream=sys.stderr, level=logging.DEBUG if arguments['-v'] else logging.WARNING)
     logging.debug(gitlab.__version__)
@@ -127,8 +132,32 @@ if __name__ == '__main__':
         g = gl.groups.get(arguments['<group>'])
         g_variables = g.variables.list()
         logging.debug("Group Variables: %s", g_variables)
-        # gl.projects.list(visibility='private', as_list=False)
-        projects = g.projects.list(all=True)
+        #gl.projects.list(visibility='private', as_list=False)
+        group_info = {'groupId': g._attrs["id"],
+                      'namespace': g._attrs["path"]}
+        try:
+            filename_prefix = g._attrs["path"].replace('/', '_')
+            filename_timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+            filename_suffix = "csv" if arguments['--csv'] else "json"
+            outputfile = open("%s_%s.%s" % (filename_prefix, filename_timestamp,
+                                            filename_suffix), 'w') if arguments['--file'] else sys.stdout
+            if arguments['--csv']:
+                with outputfile as csvfile:
+                    writer = csv.DictWriter(csvfile, [u'groupId', u'namespace', u'protected',
+                                                        u'key', u'value'], delimiter=',', quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
+                    writer.writeheader()
+                    for gv in g_variables:
+                        sv = dict((k, v) for d in (gv._attrs, group_info)
+                                    for k, v in d.items())
+                        writer.writerow(sv)
+            else:
+                svs = [dict((k, v) for d in (gv._attrs, group_info)
+                            for k, v in d.items()) for gv in g_variables]
+                outputfile.write(json.dumps(svs))
+        except Exception as e:
+            logging.exception("Error getting secret variables: %s", e)
+        if arguments["--all"]:
+            projects = g.projects.list(all=True)
     else:
         projects.append(gl.projects.get(arguments['<project>']))
 
