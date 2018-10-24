@@ -55,14 +55,15 @@ First use:
 import sys
 from docopt import docopt
 
-import os, inspect
+import os
+import inspect
 
 # uncomment the following lines to allow debugging of python-gitlab submodule
 # cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile( inspect.currentframe() ))[0],"python-gitlab")))
 # if cmd_subfolder not in sys.path:
 #    sys.path.insert(0, cmd_subfolder)
 
-#import gitlab  # http://python-gitlab.readthedocs.io/en/stable/install.html
+# import gitlab  # http://python-gitlab.readthedocs.io/en/stable/install.html
 
 import gitlab
 import csv
@@ -74,13 +75,52 @@ from os.path import exists, expanduser
 if __name__ == '__main__':
 
     arguments = docopt(__doc__, version='0.0.1')
-    logging.basicConfig(stream=sys.stderr, level=logging.DEBUG if arguments['-v'] else logging.WARNING)
+    logging.basicConfig(
+        stream=sys.stderr, level=logging.DEBUG if arguments['-v'] else logging.WARNING)
     logging.debug(gitlab.__version__)
     logging.debug(arguments)
 
-    gitlabinstance = 'gitlab' if arguments['--gitlab'] else arguments['--gitlab']
+    # check if we have config file /etc/python-gitlab.cfg or ~/.python-gitlab.cfg
+    configfile_exists = os.path.exists(os.path.join(expanduser(
+        "~"), ".python-gitlab.cfg")) or os.path.exists("/etc/python-gitlab.cfg")
 
-    gl = gitlab.Gitlab.from_config(gitlabinstance)
+    # handle used gitlab instance from arg or default value
+    # if we have no config file instance = https://www.gitlab.com
+    # else instance = gitlab from config file
+    gitlabinstance = arguments['--gitlab']
+    if not gitlabinstance:
+        gitlabinstance = 'gitlab' if configfile_exists else "https://www.gitlab.com"
+
+    gitlab_no_config_instance = gitlabinstance.startswith("https://")
+
+    if not gitlab_no_config_instance and not configfile_exists:
+        logging.error(
+            "--gitlab argument is pointing to a config-file entry [%s], but there is no config file available.", gitlabinstance)
+        sys.exit(255)
+
+    gl = None
+    try:
+        if gitlab_no_config_instance:
+            # if using gitlab by url -> get accesstoken (PAT) from user
+            # by env-var $GITLABPAT or stdin/readline
+            gitlabpat = os.environ["GITLABPAT"] if os.environ.has_key(
+                "GITLABPAT") else ''
+            while not gitlabpat:
+                try:
+                    gitlabpat = raw_input(
+                        "Enter gitlab private access token: ")
+                except EOFError:
+                    break
+            #gitlabpat = gitlabpat.strip()
+            logging.debug("Using gitlab instance %s with PAT %s", gitlabinstance, gitlabpat)
+            gl = gitlab.Gitlab(
+                gitlabinstance, private_token=gitlabpat, timeout=120)
+        else:
+            gl = gitlab.Gitlab.from_config(gitlabinstance)
+    except ValueError:
+        logging.error(
+            "Failed to communicate with gitlab server. In most cases this is an invalid private access token (PAT).")
+        sys.exit(254)
 
     projects = []
     if arguments['exportgroup']:
@@ -141,10 +181,12 @@ if __name__ == '__main__':
                     filtered_variables.append(pv)
                 logging.debug("Filtered SVs: %s", filtered_variables)
                 if arguments['get']:
-                    print json.dumps([dict(pv._attrs) for pv in filtered_variables])
+                    print json.dumps([dict(pv._attrs)
+                                      for pv in filtered_variables])
                 elif arguments['del']:
                     map(lambda k: p.variables.delete(k.key), filtered_variables)
-                    logging.info("Deleted %d variables: %s", len(filtered_variables), filtered_variables)
+                    logging.info("Deleted %d variables: %s", len(
+                        filtered_variables), filtered_variables)
                 elif arguments['set']:
                     if len(filtered_variables) > 1:
                         logging.critical("There are more than one secret variables under this key: %s",
@@ -158,6 +200,7 @@ if __name__ == '__main__':
                     else:
                         p.variables.create(
                             {'key': arguments['--key'][0], 'value': arguments['--value'], 'protected': arguments['--protected'], 'environment_scope': arguments['--environment'] if arguments['--environment'] != None else '*'})
-                        logging.info("Created variable %s", arguments['--key'][0])
+                        logging.info("Created variable %s",
+                                     arguments['--key'][0])
             except Exception as e:
                 logging.exception("Error getting secret variables: %s", e)
