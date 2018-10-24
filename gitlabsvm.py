@@ -7,6 +7,7 @@ Usage:
   gitlabsvm.py [-v] [--gitlab=<string>] set <project> --key=<string> --value=<string> [--environment=<string>] [--protected=<bool>]
   gitlabsvm.py [-v] [--gitlab=<string>] del <project> [--key=<string> --key=<string>] [--environment=<string>] [--protected=<bool>]
   gitlabsvm.py [-v] [--gitlab=<string>] exportgroup <group> [--all] [--csv] [--file]
+  gitlabsvm.py [-v] [--gitlab=<string>] export <project> [--csv] [--file]
   gitlabsvm.py [-v] [--gitlab=<string>] import <project/group> <filename.json>
   gitlabsvm.py (-h | --help)
   gitlabsvm.py --version
@@ -16,6 +17,7 @@ Arguments:
   set <project>                 Change or create a project variable
   del <project>                 Remove 1 or more project variables.
   exportgroup <group>           Print group variables, use --all to include all subprojects as well
+  export <project>              Print project variables, use --csv to export comma separated values
 
 Options:
   -h --help                     Show this screen.
@@ -159,6 +161,7 @@ if __name__ == '__main__':
         if arguments["--all"]:
             projects = g.projects.list(all=True)
     else:
+        # TODO: support multiple projects
         projects.append(gl.projects.get(arguments['<project>']))
 
     for pg in projects:
