@@ -3,26 +3,28 @@
    Author: Benedict Juretko
    License: MIT
 Usage:
-  gitlabsvm.py [--gitlab=<gitlabinstance>] get <project> [--key=<key> --key=<key>] [--environment=<env>] [--protected=<bool>]
-  gitlabsvm.py [--gitlab=<gitlabinstance>] set <project> --key=<key> --value=<value> [--environment=<env>] [--protected=<bool>]
-  gitlabsvm.py [--gitlab=<gitlabinstance>] del <project> [--key=<key> --key=<key>] [--environment=<env>] [--protected=<bool>]
-  gitlabsvm.py [--gitlab=<gitlabinstance>] export <project> [--csv] [--file]
-  gitlabsvm.py [--gitlab=<gitlabinstance>] exportgroup <group> [--csv] [--file]
-  gitlabsvm.py [--gitlab=<gitlabinstance>] import <project> --filename=<filename.json>
+  gitlabsvm.py [-v] [--gitlab=<string>] get <project> [--key=<string> --key=<string>] [--environment=<string>] [--protected=<bool>]
+  gitlabsvm.py [-v] [--gitlab=<string>] set <project> --key=<string> --value=<string> [--environment=<string>] [--protected=<bool>]
+  gitlabsvm.py [-v] [--gitlab=<string>] del <project> [--key=<string> --key=<string>] [--environment=<string>] [--protected=<bool>]
+  gitlabsvm.py [-v] [--gitlab=<string>] export <project> [--csv] [--file]
+  gitlabsvm.py [-v] [--gitlab=<string>] exportgroup <group> [--csv] [--file]
+  gitlabsvm.py [-v] [--gitlab=<string>] import <project> <filename.json>
   gitlabsvm.py (-h | --help)
   gitlabsvm.py --version
+
 
 Options:
   -h --help                     Show this screen.
   --version                     Show version.
+  -v                            Verbose logging output
   <project>                     Project name including groups, e.g. groupname/project.
   <group>                       Groupname, e.g. groupname
-  --key=NAME                    The Key-Name of the secret variable (this is not unique)
-  --environment=NAME            The target environment name, like staging or production
-  --protected=true              Only valid for protected branches
-  --value=ESCAPEDSTRING         The JSON-encoded value of the variable
-  --file                        Write to file
-  [--gitlab]                    Gitlab instance to use [default:gitlab] from ~/.python-gitlab.cfg
+  --key=<string>                The Key-Name of the secret variable (this is not unique)
+  --environment=<string>        The target environment name, like staging or production
+  --protected=<bool>            Only valid for protected branches
+  --value=<string>              The JSON-escaped value of the variable
+  --file                        Write output to file with a timestamped filename
+  --gitlab=<string>             Gitlab instance from ~/.python-gitlab.cfg or URL
 
 Examples:
   ./gitlabsvm.py set myorg/mysubgroup/myproject --key=Key1 --value=123 --protected=1 --environment="Testenv"
@@ -64,18 +66,20 @@ import os, inspect
 
 import gitlab
 import csv
-
 import json
-
 import logging
 from datetime import datetime
+from os.path import exists, expanduser
 
 if __name__ == '__main__':
-    logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
-    logging.debug(gitlab.__version__)
+
     arguments = docopt(__doc__, version='0.0.1')
+    logging.basicConfig(stream=sys.stderr, level=logging.DEBUG if arguments['-v'] else logging.WARNING)
+    logging.debug(gitlab.__version__)
     logging.debug(arguments)
+
     gitlabinstance = 'gitlab' if arguments['--gitlab'] else arguments['--gitlab']
+
     gl = gitlab.Gitlab.from_config(gitlabinstance)
 
     projects = []
