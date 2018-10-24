@@ -3,12 +3,12 @@
    Author: Benedict Juretko
    License: MIT
 Usage:
-  gitlabsvm.py [-v] [--gitlab=<string>] get <project> [--key=<string> --key=<string>] [--environment=<string>] [--protected=<bool>]
-  gitlabsvm.py [-v] [--gitlab=<string>] set <project> --key=<string> --value=<string> [--environment=<string>] [--protected=<bool>]
-  gitlabsvm.py [-v] [--gitlab=<string>] del <project> [--key=<string> --key=<string>] [--environment=<string>] [--protected=<bool>]
-  gitlabsvm.py [-v] [--gitlab=<string>] exportgroup <group> [--all] [--csv] [--file]
-  gitlabsvm.py [-v] [--gitlab=<string>] export <project> [--csv] [--file]
-  gitlabsvm.py [-v] [--gitlab=<string>] import <project/group> <filename.json>
+  gitlabsvm.py [-v | -vv] [--gitlab=<string>] get <project> [--key=<string> --key=<string>] [--environment=<string>] [--protected=<bool>]
+  gitlabsvm.py [-v | -vv] [--gitlab=<string>] set <project> --key=<string> --value=<string> [--environment=<string>] [--protected=<bool>]
+  gitlabsvm.py [-v | -vv] [--gitlab=<string>] del <project> [--key=<string> --key=<string>] [--environment=<string>] [--protected=<bool>]
+  gitlabsvm.py [-v | -vv] [--gitlab=<string>] exportgroup <group> [--all] [--csv] [--file]
+  gitlabsvm.py [-v | -vv] [--gitlab=<string>] export <project> [--csv] [--file]
+  gitlabsvm.py [-v | -vv] [--gitlab=<string>] import <project/group> <filename.json>
   gitlabsvm.py (-h | --help)
   gitlabsvm.py --version
 
@@ -80,10 +80,9 @@ from datetime import datetime
 from os.path import exists, expanduser
 
 if __name__ == '__main__':
-
     arguments = docopt(__doc__, version='0.0.2')
     logging.basicConfig(
-        stream=sys.stderr, level=logging.DEBUG if arguments['-v'] else logging.WARNING)
+        stream=sys.stderr, level=30 - (arguments["-v"] * 10))
     logging.debug(gitlab.__version__)
     logging.debug(arguments)
 

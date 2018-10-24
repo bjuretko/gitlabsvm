@@ -101,7 +101,7 @@ Options:
 ## Export all project variables of the staging environment to a csv file
 
 ```bash
-  ./gitlabsvm.py get myorg/group/project --environment staging | | jq -SMcr '(map(keys) | add | unique) as $cols | map(. as $row | $cols | map($row[.])) as $rows | $cols, $rows[] | @csv'
+  ./gitlabsvm.py get myorg/group/project --environment staging | jq -SMcr '(map(keys) | add | unique) as $cols | map(. as $row | $cols | map($row[.])) as $rows | $cols, $rows[] | @csv'
 ```
 
 ## Export group variables as json on stdout
@@ -119,7 +119,7 @@ do
   n=$(echo -e $n | sed -e 's/^[[:space:]]*//' -e 's/^export *//')
   [[ $n != "#"* ]] && eval gitlabsvm.py \
       set myorg/mysubgroup/myproject \
-      --key "$n" --value "$v" \
+      --key "'$n'" --value "'$v'" \
       --protected true \
       --environment staging
 done<myenvfile.env
